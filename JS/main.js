@@ -1,18 +1,36 @@
-  function removeTransition(e) {
-    if (e.propertyName !== 'transform') return;
-    e.target.classList.remove('playing');
-  }
+// Desktop Keyboard Support
+    window.addEventListener('keydown', e => {
+      const audio = document.querySelector(`audio[data-key="${e.keyCode}"]`);
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play();
+      }
+    });
 
-  function playSound(e) {
-    const audio = document.querySelector(`audio[data-key="${e.keyCode}"]`);
-    const key = document.querySelector(`div[data-key="${e.keyCode}"]`);
-    if (!audio) return;
+    // Mobile Touch Support
+    document.querySelectorAll('.sound').forEach(key => {
+      key.addEventListener('click', playSound);
+      key.addEventListener('touchstart', playSound);
+    });
 
-    key.classList.add('playing');
-    audio.currentTime = 0;
-    audio.play();
-  }
-
-  const keys = Array.from(document.querySelectorAll('.key'));
-  keys.forEach(key => key.addEventListener('transitionend', removeTransition));
-  window.addEventListener('keydown', playSound);
+    function playSound(e) {
+      // Prevent mobile scrolling
+      e.preventDefault();
+      
+      const keyCode = this.dataset.key;
+      const audio = document.querySelector(`audio[data-key="${keyCode}"]`);
+      
+      if (!audio) return;
+      
+      // Reset and play
+      audio.currentTime = 0;
+      const playPromise = audio.play();
+      
+      // Handle play() promise for modern browsers
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log("Playback failed:", error);
+          // Show user instruction to interact first
+        });
+      }
+    }
