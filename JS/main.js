@@ -1,29 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Keyboard support for desktops
-  window.addEventListener('keydown', e => {
-    const audio = document.querySelector(`audio[data-key="${e.keyCode}"]`);
-    if (!audio) return;
-    audio.currentTime = 0;
-    audio.play();
-  });
+  //  Remove transition class after animation ends
+  function removeTransition(e) {
+    if (e.propertyName !== 'transform') return;
+    e.target.classList.remove('playing');
+  }
 
-  // Mobile support: click or touch
-  document.querySelectorAll('.key').forEach(key => {
-    key.addEventListener('click', playSound);
-    key.addEventListener('touchstart', playSound);
-  });
-
+  //  Main playSound function (works for both keydown + touch/click)
   function playSound(e) {
-    // Prevent default scrolling on touch
-    if (e.type === 'touchstart') e.preventDefault();
+    let keyCode;
 
-    const keyCode = this.getAttribute('data-key');
+    // Detect input type: keyboard vs mouse/touch
+    if (e.type === 'keydown') {
+      keyCode = e.keyCode;
+    } else {
+      if (e.type === 'touchstart') e.preventDefault();
+      keyCode = this.getAttribute('data-key');
+    }
+
     const audio = document.querySelector(`audio[data-key="${keyCode}"]`);
-    if (!audio) return;
+    const key = document.querySelector(`div[data-key="${keyCode}"]`);
+    if (!audio || !key) return;
 
+    key.classList.add('playing');
     audio.currentTime = 0;
 
-    // Some Android browsers need play() to be in try-catch
     try {
       audio.play().catch(err => {
         console.warn("Audio play failed:", err);
@@ -32,14 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn("Playback error:", err);
     }
   }
+
+  //  Keyboard support
+  window.addEventListener('keydown', playSound);
+
+  //  Touch and Click support
+  document.querySelectorAll('.key').forEach(key => {
+    key.addEventListener('click', playSound);
+    key.addEventListener('touchstart', playSound);
+    key.addEventListener('transitionend', removeTransition);
+  });
 });
-
-
-function removeTransition(e) {
-  if (e.propertyName !== 'transform') return;
-  e.target.classList.remove('playing');
-}
-
-const keys = Array.from(document.querySelectorAll('.key'));
-keys.forEach(key => key.addEventListener('transitionend', removeTransition));
-window.addEventListener('keydown', playSound);
